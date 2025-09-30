@@ -1,0 +1,2 @@
+# bloom-well
+A simple web-based Health and Wellness Tracker that helps users track and monitor their daily wellbeing activities. The project focuses on building healthy habits by tracking things like meals, water intake, sleep, and mood. 
