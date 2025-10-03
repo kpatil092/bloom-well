@@ -1,1 +1,10 @@
-python3
+fastapi
+uvicorn[standard]
+pydantic
+motor
+beanie
+python-dotenv
+passlib[bcrypt]
+python-jose  # for JWT later
+pandas
+reportlab

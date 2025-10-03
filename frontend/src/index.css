@@ -1,3 +1,15 @@
+/*
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+*/
+
+/* small helper */
+body { 
+  background-color: #f9fafb; /* Tailwind's bg-gray-50 */
+  color: #1f2937;            /* Tailwind's text-gray-800 */
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
