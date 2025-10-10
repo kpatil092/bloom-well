@@ -1,12 +1,24 @@
-from beanie import Document
-from pydantic import EmailStr, Field
-from datetime import datetime
+from pydantic import BaseModel, EmailStr
+from typing import Optional
+from bson import ObjectId
 
-class User(Document):
-    name: str
+class PyObjectId(ObjectId):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if not ObjectId.is_valid(v):
+            raise ValueError("Invalid objectid")
+        return ObjectId(v)
+
+class User(BaseModel):
+    id: Optional[PyObjectId] = None
     email: EmailStr
+    username: str
     hashed_password: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Settings:
-        name = "users"
+    class Config:
+        json_encoders = {ObjectId: str}
+        arbitrary_types_allowed = True
