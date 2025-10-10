@@ -1,14 +1,19 @@
 from fastapi import FastAPI
-from .utils.db import init_db
-from .config import settings
+from app.routes import auth
+from app.utils.db import init_db
 
-app = FastAPI(title="Health & Wellness Tracker (Backend)")
+app = FastAPI(title="BloomWell Backend")
+
+app.include_router(auth.router)
 
 @app.on_event("startup")
-async def on_startup():
-    # initialize Mongo + Beanie
+async def startup_event():
+    print("Server starting up... creating indexes if needed...")
     await init_db()
+    print("Indexes ensured.")
 
-@app.get("/health")
-async def health():
-    return {"status": "ok", "db": settings.MONGODB_DB}
+@app.get("/")
+async def root():
+    return {"message": "BloomWell Backend is running!"}
+
+# uvicorn app.main:app --reload
