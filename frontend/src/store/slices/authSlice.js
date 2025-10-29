@@ -1,32 +1,25 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit"
 
 const initialState = {
-  user: null, // user object or null
-  token: undefined, // auth token
-};
+  user: null,
+  token: null
+}
 
 const authSlice = createSlice({
-  name: "auth",
+  name: "user",
   initialState,
   reducers: {
-    setUser(state, action) {
-      state.user = action.payload;
+    setUser: (state, action) => {
+      state.user = action.payload.user
+      state.token = action.payload.token
     },
-    updateUser(state, action) {
-      if (state.user) {
-        // Merge the existing user object with partial updates
-        state.user = { ...state.user, ...action.payload };
-      }
-    },
-    setToken(state, action) {
-      state.token = action.payload;
-    },
-    logout(state) {
-      state.user = null;
-      state.token = undefined;
-    },
-  },
+    logout : (state, action) => {
+      state.user = null
+      state.token = null
+    }
+  }
 });
 
-export const { setUser, updateUser, setToken, logout } = authSlice.actions;
-export default authSlice.reducer;
+
+export const {setUser, logout} = authSlice.actions
+export default authSlice.reducer

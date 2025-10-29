@@ -1,19 +1,28 @@
-from fastapi import FastAPI
-from app.routes import auth
-from app.utils.db import init_db
+from flask import Flask, jsonify
+from dotenv import load_dotenv
+from app.core.db import mongo_client
+from app.core.security import jwt, api, cors
+from app.core.config import Config
+from app.routes.auth_routes import bp_auth
 
-app = FastAPI(title="BloomWell Backend")
+def create_app():
+  app = Flask(__name__)
+  load_dotenv()
+  app.config.from_object(Config)
+  mongo_client.init_app(app)
+  jwt.init_app(app)
+  # api.init_app(app)
+  cors.init_app(app)
+  
+  # print("Auth routes imported")
+  app.register_blueprint(bp_auth, url_prefix="/api/auth")  #working 
+  
+  @app.get("/")
+  def index():
+    return jsonify({"msg": "Backend running"})
+  
+  return app
 
-app.include_router(auth.router)
-
-@app.on_event("startup")
-async def startup_event():
-    print("Server starting up... creating indexes if needed...")
-    await init_db()
-    print("Indexes ensured.")
-
-@app.get("/")
-async def root():
-    return {"message": "BloomWell Backend is running!"}
-
-# uvicorn app.main:app --reload
+if __name__ == "__main__":
+  app = create_app()
+  app.run(debug=True)

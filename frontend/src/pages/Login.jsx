@@ -1,49 +1,42 @@
-import React, { useState } from "react";
-import { useDispatch } from "react-redux";
-import { setUser } from "../store/slices/authSlice";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react"
+import { loginUser } from "../services/authService";
 
-const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+export default function Login() {
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [message, setMessage] = useState("")
+  const [error, setError] = useState("")
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // *static demo* - replace with real API call
-    dispatch(setUser({ id: "1", name: "Demo User", email }));
-    navigate("/dashboard");
-  }
-
+    setUsername("")
+    setPassword("")
+    setError("")
+    setMessage("")
+    try {
+      const data = await loginUser({username, password})
+      setMessage("login successful")
+      console.log("Login")
+    } catch (err) {
+      setError("Error")
+    }
+  } 
   return (
-    <div className="max-w-md mx-auto card">
-      <h2 className="text-2xl font-bold">Login</h2>
-      <form className="mt-4 flex flex-col gap-3" onSubmit={handleSubmit}>
-        <label className="flex flex-col">
-          <span className="small-muted">Email</span>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="mt-1 p-2 border rounded-lg"
-            type="email"
-          />
+    <div className="container shadow-md flex flex-col p-4 justify-center bg-col4">
+      <h2 className="text-lg font-bold mt-3">Login</h2>
+      {message && <div className="flex justify-center items-center h-12 bg-green-100 text-green-700 rounded mt-3">{message}</div>}
+      {error && <div className="flex justify-center items-center h-12 bg-red-100 text-red-700 rounded mt-3">{error}</div>}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-96 mt-6">
+        <label className="flex flex-col gap-1 ">
+          <span>Username</span>
+          <input type="text" value={username} onChange={u => setUsername(u.target.value)} className="border border-col2 rounded p-2" required />
         </label>
-        <label className="flex flex-col">
-          <span className="small-muted">Password</span>
-          <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="mt-1 p-2 border rounded-lg"
-            type="password"
-          />
-        </label>
-        <button className="btn-primary mt-2">Sign in</button>
+          <label className="flex flex-col gap-1">
+            <span>Password</span>
+            <input type="password" value={password} onChange={u => setPassword(u.target.value)} className="border border-col2 rounded p-2 "required/>
+          </label>
+          <button className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90">Log In</button>
       </form>
     </div>
-  );
-};
-
-export default Login;
+  )
+}

@@ -2,51 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-
-:root{
---bg: #FAFAFA;
---navbar: #FFFFFF;
---primary: #A8E6CF;
---primary-hover: #D9F8C4;
---secondary: #B3E5FC;
---cta: #FFCCBC;
---card-shadow: rgba(0,0,0,0.05);
---text-primary: #333333;
---text-secondary: #666666;
-}
-
-
-html,body,#root{
-height:100%;
-}
-body{
-background-color:var(--bg);
-color:var(--text-primary);
--webkit-font-smoothing:antialiased;
--moz-osx-font-smoothing:grayscale;
-}
-
-
-/* small helpers */
-.btn-primary{
-@apply px-4 py-2 rounded-lg font-semibold shadow-sm;
-background-color:var(--primary);
-}
-.btn-primary:hover{ background-color:var(--primary-hover); }
-.btn-secondary{ @apply px-4 py-2 rounded-lg font-medium; background-color:var(--secondary);}
-.btn-cta{ @apply px-4 py-2 rounded-lg font-bold; background-color:var(--cta);}
-
-
-.card{
-@apply bg-white rounded-2xl p-4 shadow-subtle;
-}
-
-
-.small-muted{ color: var(--text-secondary);}
-
-.card {
-  background-color: var(--card);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  border-radius: 0.5rem;
-  padding: 1rem;
+/* :root {} */
+:root {
+  --color-primary: #1E3A8A;
+  --color-secondary: #E24E33;
+  --color-tertiary: #53d133;
 }
