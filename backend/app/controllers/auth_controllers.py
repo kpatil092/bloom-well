@@ -1,4 +1,4 @@
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from app.models.user_model import UserModel
 from app.core.db import mongo_client
 from app.utils.user_util import get_hashed_password, check_password
@@ -51,8 +51,43 @@ def login_controller(data):
     expires_delta=Config.JWT_ACCESS_EXPIRES
     )
   
+  data = dict((k, v) for k, v in doc.items() if k not in ["_id", "password"])
+  
   return {
     'message': "Login successful", 
-    "access token": access_token,
-    "user": {"username": username, "email": doc["email"]}
+    "token": access_token,
+    "user": data
     }, 201
+  
+@jwt_required()
+def get_user_controller(data):
+  db = mongo_client.db
+  
+  cur_user = get_jwt_identity()
+  if not cur_user:
+    return {'message': 'Invalid tokens'}, 401
+  
+  doc = db.users.find_one({'username': cur_user}, {"_id": 0, "password": 0})
+  if not doc:
+    return {'message': 'User not found'}, 401
+  
+  return {
+    'message': "", 
+    "user": doc
+    }, 200
+@jwt_required()
+def update_user_controller(data):
+  db = mongo_client.db
+  
+  cur_user = get_jwt_identity()
+  if not cur_user:
+    return {'message': 'Invalid tokens'}, 401
+  
+  doc = db.users.find_one_and_update({'username': cur_user}, {"$set": data}, {"_id": 0, "password": 0})
+  if not doc:
+    return {'message': 'User not found'}, 401
+  
+  return {
+    'message': "User updated successfully", 
+    "user": doc
+    }, 200

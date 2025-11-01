@@ -2,9 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
-/* :root {} */
 :root {
-  --color-primary: #1E3A8A;
-  --color-secondary: #E24E33;
-  --color-tertiary: #53d133;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  padding: 0;
+  margin: 0;
 }
+
+body, html, #root {
+  @apply m-0 p-0;
+}
+
+/* html,body,#root{
+height:100%;
+}
+
+body{
+background-color:var(--bg);
+color:var(--text-primary);
+-webkit-font-smoothing:antialiased;
+-moz-osx-font-smoothing:grayscale;
+} */
+
+/* small helpers */
+/* .btn-primary{
+@apply px-4 py-2 rounded-lg font-semibold shadow-sm;
+background-color:var(--primary);
+}
+.btn-primary:hover{ background-color:var(--primary-hover); }
+.btn-secondary{ @apply px-4 py-2 rounded-lg font-medium; background-color:var(--secondary);}
+.btn-cta{ @apply px-4 py-2 rounded-lg font-bold; background-color:var(--cta);}
+
+
+.card{
+@apply bg-white rounded-2xl p-4 shadow-lg;
+}
+
+
+.small-muted{ color: var(--text-secondary);}
+
+.card {
+  background-color: var(--card);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-radius: 0.5rem;
+  padding: 1rem;
+} */
