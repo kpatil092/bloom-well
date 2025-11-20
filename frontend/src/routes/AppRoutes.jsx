@@ -42,8 +42,11 @@ function AppRoutes() {
 
   if (loading) {
     return (
+      <div className='min-h-screen flex flex-col align-center'>
+        <Navbar/>
       <div className="flex items-center justify-center min-h-screen">
         <p>Loading...</p>
+      </div>
       </div>
     )
   }

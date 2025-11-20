@@ -8,3 +8,5 @@ pydantic[email]
 hashlib
 bcrypt
 tzdata
+flask-sqlalchemy
+psycopg2-binary

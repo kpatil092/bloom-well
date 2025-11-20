@@ -72,7 +72,7 @@ export default function Wellness() {
       setOriginalVals(res.metrics)
       setForm(res.metrics)
     } catch (e) {
-      cout("Error: ", e)
+      console.log("Error: ", e)
       toast.error("Something went wrong")
     } finally {
       setSaving(false)
@@ -87,17 +87,18 @@ export default function Wellness() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Loading...</p>
-      </div>
-    )
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-screen">
+  //       <p>Loading...</p>
+  //     </div>
+  //   )
+  // }
 
 
   return (
     <div className="container flex flex-col gap-4 p-4">
+
       <div className="flex flex-row justify-between px-5 ">
       <h1 className="text-3xl block text-left text-primary font-bold my-6">Daily Measures</h1>
 
@@ -132,7 +133,7 @@ export default function Wellness() {
         type="input"
         onChange={handleChange}
         fields={[
-          { type:"number", label: "Active minutes (Sports, Exercise, etc.)", name: "activeMinutes", value: form.activeMinutes, placeholder: "45" },
+          { type:"number", label: "Active minutes (Sports, Exercise, etc.)", name: "activeMinutes", value: form.activeMinutes, placeholder: "45", min: 0},
           { type:"number", label: "Steps", name: "stepsCount", value: form.stepsCount, min: 1, placeholder: "8000" },
         ]}
       />

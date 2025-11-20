@@ -1,66 +1,69 @@
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from app.models.user_model import UserModel
-from app.core.db import mongo_client
+from app.models.user_model import UserModel, User
+from app.core.db import db
 from app.utils.user_util import get_hashed_password, check_password
 from app.core.config import Config
 from bson import ObjectId
-from app.utils.wellness_utils import backfill_missing_days_for_user
+from app.utils.wellness_utils import backfill_missing_days
 
 def signup_controller(data):
-  db = mongo_client.db
   try:
-    user = UserModel(**data)
+    user_ = UserModel(**data)
   except Exception as e:
     return {'message': str(e)}, 400
 
-  if db.users.find_one({"email": user.email}):
-    return {'message': "Email already exist"}, 400
-  if db.users.find_one({"username": user.username}):
-    return {'message': "Username already exist"}, 400
+  if User.query.filter_by(email=user_.email).first(): 
+    return {"message": "Email already exist"}, 400
+  if User.query.filter_by(username=user_.username).first():
+    return {"message": "Username already exist"}, 400
   
-  hashed_password = get_hashed_password(user.password)
+  hashed_password = get_hashed_password(user_.password)
   
-  user_dic = user.model_dump()
-  user_dic['password'] = str(hashed_password)  
+  user = User(username=user_.username, email=user_.email, password=hashed_password)
   
-  db.users.insert_one(user_dic)
+  try:
+    db.session.add(user)
+    db.session.commit()
+  except Exception as e:
+    db.session.rollback()
+    return {"message": str(e)}, 400
+  
   return {
     'message': "User created", 
-    "user": {"username": user_dic["username"], "email": user_dic["email"]}
+    "user": {"id": user.id, "username": user.username, "email": user.email}
     }, 201
   
 
 
 def login_controller(data):
-  db = mongo_client.db
   
   username = data.get("username", "").strip()
   password = data.get("password", "").strip()
+  
   if not username or not password:
     return {'message': "Username and password are required"}, 400
   
-  doc = db.users.find_one({"username": username})
-  if not doc:
+  user = User.query.filter_by(username=username).first()
+  
+  if not user:
     return {'message': "Invalid Credential"}, 401
 
   
-  if not (check_password(doc["password"], password)):
+  if not (check_password(user.password, password)):
     return {'message': "Invalid Credential"}, 401
   
-  user_id = str(doc["_id"])
+  user_id = str(user.id)
   
   try:
-    backfill_missing_days_for_user(ObjectId(user_id))
-  except:
-    pass
+    backfill_missing_days(user_id)
+  except:     pass
   access_token = create_access_token(
     identity=user_id, 
     fresh=True, 
     expires_delta=Config.JWT_ACCESS_EXPIRES
     )
   
-  data = dict((k, v) for k, v in doc.items() if k not in ["_id", "password"])
-  data["_id"] = user_id
+  data = user.get_user_vals()
   
   return {
     'message': "Login successful", 
@@ -70,52 +73,53 @@ def login_controller(data):
   
 @jwt_required()
 def get_user_controller(data):
-  db = mongo_client.db
   
   user_id_str = get_jwt_identity()
   
   try:
-    user_id = ObjectId(user_id_str)
+    user_id = int(user_id_str)
   except Exception:
-    return {"message": "Invalid token identity"}, 401
+    return {"message": "Invalid token"}, 401
   
-  doc = db.users.find_one({'_id': user_id}, {"password": 0})
-  if not doc:
+  user = User.query.get(user_id)
+  if not user:
     return {'message': 'User not found'}, 401
   
   try:
-    backfill_missing_days_for_user(user_id)
-  except:
-    pass  
-  
-  doc["_id"] = str(doc["_id"])
+    backfill_missing_days(user_id)
+  except Exception as e: pass  
+
   
   return {
     'message': "", 
-    "user": doc
+    "user": user.get_user_vals()
     }, 200
   
 @jwt_required()
 def update_user_controller(data):
-  db = mongo_client.db
   
   user_id_str = get_jwt_identity()
   
   try:
-    user_id = ObjectId(user_id_str)
+    user_id = int(user_id_str)
   except Exception:
     return {"message": "Invalid token identity"}, 401
   
-  doc = db.users.find_one_and_update(
-    {'_id': user_id}, {"$set": data}, {"password": 0}, 
-    return_document=True
-  )
-  if not doc:
+  user = User.query.get(user_id)
+  if not user:
     return {'message': 'User not found'}, 404
   
-  doc["_id"] = str(doc["_id"])
+  for k, v in data.items():
+    if k in ("dob", "name", "gender", "goal"):
+      setattr(user, k, v)
+      
+  try:
+    db.session.commit()
+  except Exception:
+    db.session.rollback()
+    return {"message": "Something went wrong"}, 500
   
   return {
     'message': "User updated successfully", 
-    "user": doc
+    "user": user.get_user_vals()
     }, 200
