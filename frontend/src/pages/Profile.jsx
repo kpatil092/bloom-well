@@ -43,7 +43,7 @@ export default function Profile() {
       toast.success("Profile updated successfully");
       setOriginalVals(formData)
     } catch (err) {
-      toast.error("Error updating");
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }

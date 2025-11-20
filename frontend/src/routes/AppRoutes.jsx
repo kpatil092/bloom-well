@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react'
 import { getCurrentUser } from '../services/authService'
 import { logout, setUser } from '../store/slices/authSlice'
 import Profile from '../pages/Profile'
+import Wellness from '../pages/Wellness'
 
 function AppRoutes() {
 
@@ -58,6 +59,7 @@ function AppRoutes() {
           <Route path='/signup' element={!user ? <SignUp/> : <Navigate to="/" replace />}/>
           <Route path='/dashboard' element={user ? <Dashboard/> : <Navigate to="/login" replace />}/>
           <Route path='/nutritions' element={user ? <Nutrition/> : <Navigate to="/login" replace />}/>
+          <Route path='/wellness' element={user ? <Wellness/> : <Navigate to="/login" replace />}/>
           <Route path='/profile' element={user ? <Profile/> : <Navigate to="/login" replace />}/>
           <Route path='*' element={<Navigate to="/" />}/>
         </Routes>

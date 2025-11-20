@@ -16,6 +16,7 @@ export default function Login() {
     
     try {
       const data = await loginUser({username, password})
+      console.log(data)
       dispatch(setUser({user: data.user, token: data.token}))
       localStorage.setItem("token", data.token);
     toast.success("login successful")
@@ -25,7 +26,7 @@ export default function Login() {
     console.log(data)
       console.log("Login")
     } catch (err) {
-      toast.error("Error")
+      toast.error(err.message)
     }
   } 
 
@@ -52,7 +53,7 @@ export default function Login() {
           <input type="text" 
           name="username"
           value={username} 
-          onChange={u => setUsername(u.target.value)} 
+          onChange={u => setUsername(u.target.value.trim())} 
           className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-primary focus:ring-0 outline-none" 
           required />
         </label>
@@ -61,7 +62,7 @@ export default function Login() {
             <input 
             type="password" 
             value={password} 
-            onChange={u => setPassword(u.target.value)} 
+            onChange={u => setPassword(u.target.value.trim())} 
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-primary 
                         focus:ring-0 outline-none"
             required/>

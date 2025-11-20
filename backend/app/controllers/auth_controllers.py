@@ -3,6 +3,8 @@ from app.models.user_model import UserModel
 from app.core.db import mongo_client
 from app.utils.user_util import get_hashed_password, check_password
 from app.core.config import Config
+from bson import ObjectId
+from app.utils.wellness_utils import backfill_missing_days_for_user
 
 def signup_controller(data):
   db = mongo_client.db
@@ -45,47 +47,73 @@ def login_controller(data):
   if not (check_password(doc["password"], password)):
     return {'message': "Invalid Credential"}, 401
   
+  user_id = str(doc["_id"])
+  
+  try:
+    backfill_missing_days_for_user(ObjectId(user_id))
+  except:
+    pass
   access_token = create_access_token(
-    identity=username, 
+    identity=user_id, 
     fresh=True, 
     expires_delta=Config.JWT_ACCESS_EXPIRES
     )
   
   data = dict((k, v) for k, v in doc.items() if k not in ["_id", "password"])
+  data["_id"] = user_id
   
   return {
     'message': "Login successful", 
     "token": access_token,
     "user": data
-    }, 201
+    }, 200
   
 @jwt_required()
 def get_user_controller(data):
   db = mongo_client.db
   
-  cur_user = get_jwt_identity()
-  if not cur_user:
-    return {'message': 'Invalid tokens'}, 401
+  user_id_str = get_jwt_identity()
   
-  doc = db.users.find_one({'username': cur_user}, {"_id": 0, "password": 0})
+  try:
+    user_id = ObjectId(user_id_str)
+  except Exception:
+    return {"message": "Invalid token identity"}, 401
+  
+  doc = db.users.find_one({'_id': user_id}, {"password": 0})
   if not doc:
     return {'message': 'User not found'}, 401
+  
+  try:
+    backfill_missing_days_for_user(user_id)
+  except:
+    pass  
+  
+  doc["_id"] = str(doc["_id"])
   
   return {
     'message': "", 
     "user": doc
     }, 200
+  
 @jwt_required()
 def update_user_controller(data):
   db = mongo_client.db
   
-  cur_user = get_jwt_identity()
-  if not cur_user:
-    return {'message': 'Invalid tokens'}, 401
+  user_id_str = get_jwt_identity()
   
-  doc = db.users.find_one_and_update({'username': cur_user}, {"$set": data}, {"_id": 0, "password": 0})
+  try:
+    user_id = ObjectId(user_id_str)
+  except Exception:
+    return {"message": "Invalid token identity"}, 401
+  
+  doc = db.users.find_one_and_update(
+    {'_id': user_id}, {"$set": data}, {"password": 0}, 
+    return_document=True
+  )
   if not doc:
-    return {'message': 'User not found'}, 401
+    return {'message': 'User not found'}, 404
+  
+  doc["_id"] = str(doc["_id"])
   
   return {
     'message': "User updated successfully", 

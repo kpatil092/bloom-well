@@ -7,3 +7,4 @@ flask_cors
 pydantic[email]
 hashlib
 bcrypt
+tzdata
