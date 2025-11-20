@@ -43,6 +43,7 @@ export default function SignUp() {
       navigate("/login")
       console.log("SignUp")
     } catch (err) {
+      console.log(err)
       toast.error("Error")
     }
   } 

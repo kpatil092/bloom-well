@@ -1,27 +1,26 @@
 from datetime import datetime, timezone, timedelta
-from bson import ObjectId
-from pymongo import ReturnDocument, ASCENDING
 from flask_jwt_extended import get_jwt_identity
 from zoneinfo import ZoneInfo
     
-from app.core.db import mongo_client
-from app.models.wellness_model import DEFAULTS, ALLOWED_FIELDS
-from app.utils.wellness_utils import backfill_missing_days_for_user
+from app.core.db import db
+from app.models.wellness_model import DEFAULTS, ALLOWED_FIELDS, WellnessMetrics
+from app.utils.wellness_utils import backfill_missing_days
 
 IST = ZoneInfo("Asia/Kolkata")
 
+
+
 def get_today_controller():
-  db = mongo_client.db
-  user_id = ObjectId(get_jwt_identity())
+  user_id = int(get_jwt_identity())
 
-  backfill_missing_days_for_user(user_id)
+  backfill_missing_days(user_id)
 
-  doc = db.wellness_metrics.find_one({
-    "userId": user_id, 
-    "date": datetime.now(IST).date().isoformat()
-    })
+  metric = WellnessMetrics.query.filter_by(
+    user_id= user_id, 
+    date= datetime.now(IST).date()
+    ).first()
 
-  if not doc:
+  if not metric:
     return {
       "date": datetime.now(IST).date().isoformat(),
       "metrics": DEFAULTS,
@@ -30,116 +29,134 @@ def get_today_controller():
     }, 200
 
   return {
-    "date": doc["date"],
-    "metrics": doc["metrics"],
-    "source": doc.get("source", "user"),
+    "date": metric.date.isoformat(),
+    "metrics": metric.get_metric_vals(),
+    "source": metric.source or "user",
     "exists": True,
-    "updatedAt": doc.get("updatedAt"),
+    "updatedAt": metric.updated_at.replace(tzinfo=timezone.utc).isoformat(),
   }, 200
 
 
 def upsert_today_controller(payload):
-  db = mongo_client.db
-  user_id = ObjectId(get_jwt_identity())
+  
+  user_id = int(get_jwt_identity())
 
-  backfill_missing_days_for_user(user_id)
-
-  welness_collection = db.wellness_metrics
+  backfill_missing_days(user_id)
 
   payload = payload or {} 
   metrics = {k: v for k, v in payload.items() if k in ALLOWED_FIELDS}
 
-  welness_collection.update_one(
-    {"userId": user_id, "date": datetime.now(IST).date().isoformat()},
-    {
-      "$setOnInsert": {
-        "userId": user_id,
-        "date": datetime.now(IST).date().isoformat(),
-        "metrics": DEFAULTS.copy(),
-        "source": "user",
-        "createdAt": datetime.now(timezone.utc),
-      }
-    },
-    upsert=True,
-  )
+  metric = WellnessMetrics.query.filter_by(user_id=user_id, date=datetime.now(IST).date()).first()
+  if not metric:
+    metric = WellnessMetrics.fill_metric_vals( 
+      user_id=user_id,
+      date=datetime.now(IST).date(), 
+      metrics=DEFAULTS, 
+      source="user", 
+    ) 
+    db.session.add(metric) 
+    db.session.flush()
 
-  updated = welness_collection.find_one_and_update(
-    {"userId": user_id, "date": datetime.now(IST).date().isoformat()},
-    {
-      "$set": {
-        "metrics": metrics,
-        "source": "user",
-        "updatedAt": datetime.now(timezone.utc),
-      }
-    },
-    return_document=ReturnDocument.AFTER,
-  )
+  new_metric = metric.get_metric_vals() 
+  new_metric.update(metrics) 
+  
+  metric.sleep_hours = new_metric["sleepHours"] 
+  metric.sleep_quality = new_metric["sleepQuality"] 
+  metric.mood = new_metric["mood"] 
+  metric.stress = new_metric["stress"] 
+  metric.energy = new_metric["energy"] 
+  metric.active_minutes = new_metric["activeMinutes"] 
+  metric.steps_count = new_metric["stepsCount"] 
+  metric.water = new_metric["water"] 
+  metric.weight = new_metric.get("weight") 
+  metric.height = new_metric.get("height") 
+  metric.calories = new_metric["calories"]
+  metric.protein = new_metric["protein"]
+  metric.carbs = new_metric["carbs"]
+  metric.fats = new_metric["fats"]
+  metric.source = "user" 
+  metric.updated_at = datetime.now(timezone.utc) 
+  
+  db.session.commit()
 
-  return {
-      "date": updated["date"],
-      "metrics": updated["metrics"],
-      "source": updated.get("source", "user"),
-      "updatedAt": updated.get("updatedAt"),
+  return { 
+    "date": metric.date.isoformat(), 
+    "metrics": metric.get_metric_vals(), 
+    "source": metric.source or "user", 
+    "updatedAt": metric.updated_at.replace(tzinfo=timezone.utc).isoformat()
   }, 200
 
 def get_by_date_controller(date_str):
-  db = mongo_client.db
-  user_id = ObjectId(get_jwt_identity())
+  user_id = int(get_jwt_identity())
 
-  backfill_missing_days_for_user(user_id)
+  backfill_missing_days(user_id)
 
-  doc = db.wellness_metrics.find_one({"userId": user_id, "date": date_str})
+  try: 
+    dt = datetime.strptime(date_str, "%Y-%m-%d").date() 
+  except ValueError:
+    return {"message": "Invalid date format"}, 400
+  
+  
+  doc = WellnessMetrics.query.filter_by(user_id=user_id, date=dt).first()
   if not doc:
     return {"date": date_str, "metrics": None, "exists": False}, 200
 
   return {
-    "date": doc["date"],
-    "metrics": doc["metrics"],
-    "exists": True,
-    "source": doc.get("source", "user"),
-    "updatedAt": doc.get("updatedAt"),
+    "date": doc.date.isoformat(), 
+    "metrics": doc.get_metric_vals(), 
+    "source": doc.source or "user", 
+    "updatedAt": doc.updated_at.replace(tzinfo=timezone.utc).isoformat()
   }, 200
 
 def get_range_controller(start, end):
-  db = mongo_client.db
-  user_id = ObjectId(get_jwt_identity())
+  user_id = int(get_jwt_identity())
 
-  backfill_missing_days_for_user(user_id)
+  backfill_missing_days(user_id)
+  
+  try:
+    start_dt = datetime.strptime(start, "%Y-%m-%d").date()
+    end_dt = datetime.strptime(end, "%Y-%m-%d").date()
+  except ValueError:
+    return {"message": "Invalid date format"}, 400
+    
 
-  cursor = db.wellness_metrics.find({
-    "userId": user_id,
-    "date": {"$gte": start, "$lte": end}
-  }).sort("date", ASCENDING)
+  data = WellnessMetrics.query.filter(
+    WellnessMetrics.user_id == user_id,
+    WellnessMetrics.date >= start_dt,
+    WellnessMetrics.date <= end_dt
+    ).order_by(WellnessMetrics.date.asc()).all()
 
-  results = [{
-    "date": d["date"],
-    "metrics": d["metrics"],
-    "source": d.get("source", "user"),
-    "updatedAt": d.get("updatedAt"),
-  } for d in cursor]
+  results = []
+  
+  for metric in data:
+    results.append({
+      "date": metric.date.isoformat(), 
+      "metrics": metric.get_metric_vals(), 
+      "source": metric.source or "user", 
+      "updatedAt": metric.updated_at.replace(tzinfo=timezone.utc).isoformat()
+    })
 
   return results, 200
 
 def get_yesterday_controller():
-  db = mongo_client.db
-  user_id = ObjectId(get_jwt_identity())
+  user_id = int(get_jwt_identity())
 
-  backfill_missing_days_for_user(user_id)
-  yesterday_str = (datetime.now(IST).date() - timedelta(days=1)).isoformat()
+  backfill_missing_days(user_id)
+  yesterday = (datetime.now(IST).date() - timedelta(days=1))
 
-  doc = db.wellness_metrics.find_one({"userId": user_id, "date": yesterday_str})
+  doc = WellnessMetrics.query.filter_by(user_id=user_id, date=yesterday).first()
+  
   if not doc:
     return {
-      "date": yesterday_str,
+      "date": yesterday.isoformat(),
       "metrics": DEFAULTS.copy(),
       "source": "none",
       "exists": False
     }, 200
 
   return {
-    "date": doc["date"],
-    "metrics": doc["metrics"],
-    "source": doc.get("source", "user"),
-    "exists": True,
-    "updatedAt": doc.get("updatedAt"),
+    "date": doc.date.isoformat(), 
+    "metrics": doc.get_metric_vals(), 
+    "source": doc.source or "user", 
+    "updatedAt": doc.updated_at.replace(tzinfo=timezone.utc).isoformat()
   }, 200

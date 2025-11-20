@@ -1,58 +1,57 @@
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-from bson import ObjectId
-from app.core.db import mongo_client
-from app.models.wellness_model import DEFAULTS
+from app.core.db import db
+from app.models.wellness_model import DEFAULTS, WellnessMetrics
 
 IST = ZoneInfo("Asia/Kolkata")
 
-def backfill_missing_days_for_user(user_id):
-  db = mongo_client.db
-  wellness_collection = db.wellness_metrics
+def backfill_missing_days(user_id):
+  
   yesterday = datetime.now(IST).date() - timedelta(days=1)
 
-  last_doc = wellness_collection.find_one(
-    {"userId": user_id},
-    sort=[("date", -1)],
-    projection={"date": 1, "metrics": 1},
+  last_doc = (
+    WellnessMetrics.query
+    .filter_by(user_id=user_id)
+    .order_by(WellnessMetrics.date.desc())
+    .first()
   )
 
   if not last_doc:
-    yday_str = yesterday.strftime("%Y-%m-%d")
-    exists = wellness_collection.find_one({"userId": user_id, "date": yday_str}, {"_id": 1})
-    if not exists:
-      try:
-        wellness_collection.insert_one({
-          "userId": user_id,
-          "date": yday_str,
-          "metrics": DEFAULTS.copy(),
-          "source": "auto",
-          "createdAt": datetime.now(timezone.utc),
-          "updatedAt": datetime.now(timezone.utc),
-        })
-      except Exception: pass
+    yesterday_data = WellnessMetrics.query.filter_by(user_id=user_id, date=yesterday).first()
+    
+    if not yesterday_data:
+      record = WellnessMetrics.fill_metric_vals(
+        user_id=user_id,
+        date=yesterday,
+        metrics=DEFAULTS,
+        source="auto"
+      )
+      record.created_at = datetime.now(timezone.utc)
+      record.updated_at = datetime.now(timezone.utc)
+      
+      db.session.add(record)
+      db.session.commit()
+      
     return
-
-  last_date = datetime.strptime(last_doc["date"], "%Y-%m-%d").date()
+      
+  last_date = last_doc.date
   next_date = last_date + timedelta(days=1)
   if next_date > yesterday:
     return  
 
-  base_metrics = last_doc.get("metrics", DEFAULTS.copy())
+  first_entry = last_doc.get_metric_vals()
 
-  docs = []
-  while next_date <= yesterday:
-    docs.append({
-      "userId": user_id,
-      "date": next_date.strftime("%Y-%m-%d"),
-      "metrics": base_metrics.copy(),
-      "source": "auto",
-      "createdAt": datetime.now(timezone.utc),
-      "updatedAt": datetime.now(timezone.utc),
-    })
-    next_date += timedelta(days=1)
-
-  if docs:
-    try:
-      wellness_collection.insert_many(docs, ordered=False)
-    except Exception: pass
+  curr = next_date
+  while curr <= yesterday:
+    record = WellnessMetrics.fill_metric_vals(
+      user_id=user_id,
+      date=curr,
+      metrics=first_entry,
+      source="auto"
+    )
+    record.created_at = datetime.now(timezone.utc)
+    record.updated_at = datetime.now(timezone.utc)
+    db.session.add(record)
+    curr = curr + timedelta(days=1)
+    
+  db.session.commit()

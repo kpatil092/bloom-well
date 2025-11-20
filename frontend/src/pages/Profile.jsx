@@ -17,11 +17,16 @@ export default function Profile() {
   const [originalVals, setOriginalVals] = useState({})
   const [loading, setLoading] = useState(false)
 
+  const formatDate = (date) => {
+    if(date) return new Date(date).toISOString().split('T')[0]
+    return ""
+  }
+
 
   useEffect(() => {
     if(user) {
       const state = {username: user.username || "",
-      name: user.name || "", email: user.email || "", dob: user.dob || "",
+      name: user.name || "", email: user.email || "", dob: formatDate(user.dob) ?? "",
       gender: user.gender  || "", goal: user.goal || ""}
 
       setOriginalVals(state)

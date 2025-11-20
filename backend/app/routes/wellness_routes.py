@@ -31,7 +31,7 @@ def upsert_today():
 def get_by_date():
   date_str = request.args.get("date")
   if not date_str:
-    return jsonify({"error": "Missing date"}), 400
+    return jsonify({"message": "Missing date"}), 400
 
   data, status = get_by_date_controller(date_str)
   return jsonify(data), status
@@ -44,7 +44,7 @@ def get_range():
   end = request.args.get("end")
 
   if not start or not end:
-    return jsonify({"error": "Missing range"}), 400
+    return jsonify({"message": "Missing range"}), 400
 
   data, status = get_range_controller(start, end)
   return jsonify(data), status
