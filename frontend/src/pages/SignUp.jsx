@@ -112,7 +112,7 @@ export default function SignUp() {
 
       {/* Right Side */}
       <div className="hidden md:flex md:w-1/3 bg-cover bg-center">
-      <div className="bg-black/40 w-full h-full flex flex-col justify-center items-center text-white p-8">
+      <div className="bg-green-200 w-full h-full flex flex-col justify-center items-center text-black/80 p-8">
       <h1 className="text-3xl font-semibold font-serif mb-2">Bloom-well</h1>
       </div>
       </div>

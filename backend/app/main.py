@@ -7,6 +7,10 @@ from app.core.security import jwt, api, cors
 from app.core.config import Config
 from app.routes.auth_routes import bp_auth
 from app.routes.wellness_routes import bp_wellness
+from app.routes.nutrition import nutrition_bp
+from app.routes.meal import meal_bp
+
+
 
 def create_app():
   load_dotenv()
@@ -25,6 +29,10 @@ def create_app():
   # print("Auth routes imported")
   app.register_blueprint(bp_auth, url_prefix="/api/auth")  #working 
   app.register_blueprint(bp_wellness, url_prefix="/api/wellness")
+  app.register_blueprint(nutrition_bp, url_prefix='/api')
+  app.register_blueprint(meal_bp, url_prefix='/api')
+
+  
   
   @app.get("/")
   def index():

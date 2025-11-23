@@ -17,6 +17,11 @@ class PyMongoClient:
     db_name = app.config.get("DB_NAME", Config.DB_NAME)
     self.client  = MongoClient(Config.MONGO_URI)
     self.db = self.client[Config.DB_NAME]
+
+  def get_collection(self, name: str):
+    if self.db is None:
+      raise ConnectionError("MongoDB not initialized. Did you call mongo_client.init_app(app)?")
+    return self.db[name] 
     
   def close(self):
     if self.client:

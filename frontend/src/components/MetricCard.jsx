@@ -56,7 +56,7 @@ export default function MetricCard({
           )}
 
           else return (
-            <div className="">
+            <div key={field.name} className="">
               <label htmlFor={field.name} className="flex flex-col gap-2 min-w-full">
                 <div className="flex gap-2 text-sm text-gray-700 w-full">
                   <span className="block w-full text-left p-1 ">{field.label}</span>
