@@ -30,7 +30,8 @@ const FoodCard = ({ foodData, onAddToMeal }) => {
 
     const weightValue = parseFloat(value);
     if (!isNaN(weightValue) && weightValue > 0) {
-      setQuantity(weightValue / portionSizeGrams);
+       const qty = weightValue / portionSizeGrams;
+       setQuantity(Number(qty.toFixed(3))); 
     }
   };
 
