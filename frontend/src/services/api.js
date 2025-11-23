@@ -4,6 +4,7 @@ import { logout } from "../store/slices/authSlice"
 
 const BASE_RUL = import.meta.env.VITE_API_BASE_URL
 
+
 const axiosClient = axios.create({
   baseURL: BASE_RUL,
   withCredentials: true

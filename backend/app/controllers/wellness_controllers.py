@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 from app.core.db import db
 from app.models.wellness_model import DEFAULTS, ALLOWED_FIELDS, WellnessMetrics
 from app.utils.wellness_utils import backfill_missing_days
+from app.services.wellness_analysis import analyze_correlations
 
 IST = ZoneInfo("Asia/Kolkata")
 
@@ -136,7 +137,12 @@ def get_range_controller(start, end):
       "updatedAt": metric.updated_at.replace(tzinfo=timezone.utc).isoformat()
     })
 
-  return results, 200
+  analysis = analyze_correlations(data)  
+
+  return {
+        "raw": results,
+        "analysis": analysis
+    }, 200
 
 def get_yesterday_controller():
   user_id = int(get_jwt_identity())

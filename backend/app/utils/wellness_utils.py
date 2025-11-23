@@ -7,7 +7,7 @@ IST = ZoneInfo("Asia/Kolkata")
 
 def backfill_missing_days(user_id):
   
-  yesterday = datetime.now(IST).date() - timedelta(days=1)
+  today = datetime.now(IST).date() 
 
   last_doc = (
     WellnessMetrics.query
@@ -17,12 +17,12 @@ def backfill_missing_days(user_id):
   )
 
   if not last_doc:
-    yesterday_data = WellnessMetrics.query.filter_by(user_id=user_id, date=yesterday).first()
+    today_data = WellnessMetrics.query.filter_by(user_id=user_id, date=today).first()
     
-    if not yesterday_data:
+    if not today_data:
       record = WellnessMetrics.fill_metric_vals(
         user_id=user_id,
-        date=yesterday,
+        date=today,
         metrics=DEFAULTS,
         source="auto"
       )
@@ -36,13 +36,13 @@ def backfill_missing_days(user_id):
       
   last_date = last_doc.date
   next_date = last_date + timedelta(days=1)
-  if next_date > yesterday:
+  if next_date > today:
     return  
 
   first_entry = last_doc.get_metric_vals()
 
   curr = next_date
-  while curr <= yesterday:
+  while curr <= today:
     record = WellnessMetrics.fill_metric_vals(
       user_id=user_id,
       date=curr,
