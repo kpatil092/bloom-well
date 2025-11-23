@@ -58,6 +58,7 @@ class NutritionScraper:
         proxy_search_url = f"https://api.scrape.do/?url={encoded_search_url}&token=fac310728e2a4fafabf5b4d614184cab8bcc93d9b32"
         
         try:
+            print(f"🔍 Searching for: {food_item}")
             search_response = requests.get(proxy_search_url, headers=headers, timeout=10)
             search_soup = BeautifulSoup(search_response.content, 'html.parser')
             
@@ -66,7 +67,7 @@ class NutritionScraper:
                 return {'error': f"No results found for {food_item}"}
             
             product_url = base_url + first_result['href']
-            # print(f"Found product: {product_url}")
+            print(f"Found product: {product_url}")
             
             encoded_product_url = urllib.parse.quote(product_url)
             proxy_product_url = f"http://api.scrape.do/?url={encoded_product_url}&token=fac310728e2a4fafabf5b4d614184cab8bcc93d9b32"
@@ -97,11 +98,11 @@ class NutritionScraper:
                 'protein': nutrients.get('Protein', 'N/A')
             }
             
-            # print(f"Scraped nutrients: {formatted_nutrients}")
+            print(f"Scraped nutrients: {formatted_nutrients}")
             return formatted_nutrients
             
         except Exception as e:
-            # print(f"Error: {str(e)}")
+            print(f"Error: {str(e)}")
             return {'error': f'Scraping error: {str(e)}'}
 
     @staticmethod
