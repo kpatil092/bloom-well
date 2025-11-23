@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import Home from '../pages/Home'
 import Login from '../pages/Login'
@@ -11,12 +11,16 @@ import { getCurrentUser } from '../services/authService'
 import { logout, setUser } from '../store/slices/authSlice'
 import Profile from '../pages/Profile'
 import Wellness from '../pages/Wellness'
+import Footer from '../components/Footer'
 
 function AppRoutes() {
 
   const user = useSelector(s => s.auth.user)
   const dispatch = useDispatch()
   const [loading, setLoading] = useState(true)
+
+  const location = useLocation()
+  const showFooter = location.pathname === "/"
 
 
   useEffect(() => {
@@ -67,6 +71,7 @@ function AppRoutes() {
           <Route path='*' element={<Navigate to="/" />}/>
         </Routes>
     </main>
+    {showFooter && <Footer/>}
     </div>
   )
 }
