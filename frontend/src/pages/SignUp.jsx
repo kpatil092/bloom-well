@@ -100,7 +100,7 @@ export default function SignUp() {
         </div>
           <button className="bg-primary w-full py-2.5 rounded-lg text-white font-medium  
                     transition hover:bg-primary/90">
-                      Log In
+                      Sign Up
             </button>
       </form>
 
