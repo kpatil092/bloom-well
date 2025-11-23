@@ -1,7 +1,4 @@
 import pandas as pd
-import numpy as np
-from typing import List, Dict, Any
-from app.models.wellness_model import WellnessMetrics
 
 CORRELATION_PAIRS = [
     ("sleepHours", "mood"),
@@ -32,8 +29,16 @@ def records_to_df(records):
 
     return df
 
+def strength(v):
+    if abs(v) >= 0.65:
+        return "strong"
+    if abs(v) >= 0.4:
+        return "moderate"
+    return "weak"
+
 def compute_correlations(df):
     correlations = {}
+
     for a, b in CORRELATION_PAIRS:
         if a not in df.columns or b not in df.columns:
             continue
@@ -41,22 +46,18 @@ def compute_correlations(df):
         subset = df[[a, b]].dropna()
         if len(subset) < 5:
             continue
+        if subset[a].std() == 0 or subset[b].std() == 0:
+            continue
 
-        value = float(subset[a].corr(subset[b]))
+        corr_val = subset[a].corr(subset[b])
+        if pd.isna(corr_val):
+            continue
         correlations[f"{a}__{b}"] = {
-            "value": round(value, 3),
-            "n": len(subset)
+            "value": round(float(corr_val), 3),
+            "n": len(subset),
         }
 
     return correlations
-
-
-def strength(v):
-    if abs(v) >= 0.65:
-        return "strong"
-    if abs(v) >= 0.4:
-        return "moderate"
-    return "weak"
 
 
 def analyze_correlations(records):

@@ -25,7 +25,6 @@ export default function MetricCard({
       </div>
 
 
-      {/* Body */}
       <div className="flex flex-col gap-4 p-5 w-full">
         {fields.map((field) => {
           const isSlider = field.type === "range"
