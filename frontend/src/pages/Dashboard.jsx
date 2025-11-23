@@ -1,18 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axiosClient from "../services/api";
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  Area,
-  ComposedChart,
-  CartesianGrid,
-  BarChart,
-  Bar,
+import { ResponsiveContainer, LineChart,  Line, XAxis, YAxis, Tooltip,
+  Legend, Area, ComposedChart, CartesianGrid , BarChart, Bar,
 } from "recharts";
 
 import { motion } from "framer-motion";
@@ -29,6 +18,16 @@ const OPTIONS = [
   { label: "30 Days", days: 30 },
 ];
 
+const Label_dict = {
+  "sleepHours": "Sleep Hours",
+  "mood": "Mood",
+  "stress": "Stress",
+  "energy": "Energy",
+  "activeMinutes": "Active Minutes",
+  "stepsCount": "Steps Count",
+  "calories": "Calories"
+}
+
 const ChartCard = ({ title, children }) => (
   <motion.div
     initial={{ opacity: 0, y: 8 }}
@@ -40,14 +39,6 @@ const ChartCard = ({ title, children }) => (
   </motion.div>
 );
 
-function correlationStrength(value) {
-  const v = Math.abs(value);
-  if (v >= 0.65) return "Strong";
-  if (v >= 0.4) return "Moderate";
-  return "Weak";
-}
-
-
 export default function Dashboard() {
   const [days, setDays] = useState(7);
   const [rawData, setRawData] = useState([]);
@@ -55,7 +46,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch wellness range + analysis
   useEffect(() => {
     const fetchRange = async () => {
       setLoading(true);
@@ -100,7 +90,7 @@ export default function Dashboard() {
     fetchRange();
   }, [days]);
 
-  // Compute BMI & number conversions
+  // BMI
   const chartData = useMemo(() => {
     return rawData.map((r) => ({
       ...r,
@@ -149,7 +139,7 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="calories" stroke="#10B981" strokeWidth={2} />
+                <Line type="monotone" dataKey="calories" stroke="#10B981" name="Calories" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -163,9 +153,9 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Area dataKey="protein" stackId="a" stroke="#60A5FA" fill="#60A5FA" />
-                <Area dataKey="carbs" stackId="a" stroke="#FBBF24" fill="#FBBF24" />
-                <Area dataKey="fats" stackId="a" stroke="#F97316" fill="#F97316" />
+                <Area dataKey="protein" stackId="a" stroke="#60A5FA" fill="#60A5FA" name="Proteins"/>
+                <Area dataKey="carbs" stackId="a" stroke="#FBBF24" fill="#FBBF24" name="Carbs"/>
+                <Area dataKey="fats" stackId="a" stroke="#F97316" fill="#F97316" name="Fats"/>
               </ComposedChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -185,29 +175,14 @@ export default function Dashboard() {
                 <YAxis yAxisId="right" orientation="right" />
                 <Tooltip />
                 <Legend />
-                <Line dataKey="sleepHours" yAxisId="left" stroke="#06B6D4" />
-                <Line dataKey="sleepQuality" yAxisId="right" stroke="#8B5CF6" />
+                <Line dataKey="sleepHours" yAxisId="left" stroke="#06B6D4" name="Sleep hours"/>
+                <Line dataKey="sleepQuality" yAxisId="right" stroke="#8B5CF6" name="Sleep quality"/>
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          {/* Steps + active minutes */}
-          <ChartCard title="Steps & Active Minutes">
-            <ResponsiveContainer>
-              <ComposedChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="stepsCount" barSize={20} fill="#8B5CF6" />
-                <Line dataKey="activeMinutes" stroke="#10B981" />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </ChartCard>
-
-          {/* Water */}
-          <ChartCard title="Water Intake (glasses)">
+          {/* Steps and active minutes */}
+          <ChartCard title="Daily Steps">
             <ResponsiveContainer>
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -215,7 +190,34 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="water" fill="#17e7a2ff" />
+                <Bar dataKey="stepsCount" fill="#8B5CF6" name="Steps Count"/>
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          <ChartCard title="Active Minutes">
+            <ResponsiveContainer>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line dataKey="activeMinutes" stroke="#10B981" name="Active minutes"/>
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          {/* Water */}
+          <ChartCard title="Water Intake (in L)">
+            <ResponsiveContainer>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="water" fill="#17e7a2ff" name="Water Intake"/>
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -223,10 +225,10 @@ export default function Dashboard() {
         </div>
 
         {/* Mental Wellness */}
-        <h2 className="text-base font-semibold mb-3 text-green-700">Mental Wellness</h2>
+        <h2 className="text-base font-semibold mb-3 text-green-700">Mental Wellness & other activities</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
 
-          <ChartCard title="Mood vs Stress">
+          <ChartCard title="Mood, Stress & Energy Levels">
             <ResponsiveContainer>
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -234,30 +236,13 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line dataKey="mood" stroke="#34D399" />
-                <Line dataKey="stress" stroke="#F43F5E" />
+                <Line type="monotone" dataKey="mood" stroke="#34D399" name="Mood" />
+                <Line type="monotone" dataKey="stress" stroke="#6366F1" name="Stress"/>
+                <Line type="monotone" dataKey="energy" stroke="#EF4444" name="Energy"/>
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Energy Levels">
-            <ResponsiveContainer>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line dataKey="energy" stroke="#EF4444" />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartCard>
-
-        </div>
-
-        {/* Weight & BMI */}
-        <h2 className="text-base font-semibold mb-3 text-green-700">Other Activity</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           <ChartCard title="Weight & BMI">
             <ResponsiveContainer>
               <LineChart data={chartData}>
@@ -266,43 +251,38 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line dataKey="weight" stroke="#6366F1" />
-                <Line dataKey="bmi" stroke="#F59E0B" />
+                <Line dataKey="weight" stroke="#6366F1" name="Weight"/>
+                <Line dataKey="bmi" stroke="#F59E0B" name="BMI"/>
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
+
+
         </div>
 
-        {/* ================== ANALYSIS INSIGHTS =================== */}
+
         <div className="bg-white p-5 rounded-2xl shadow mb-10">
           <h3 className="text-lg font-bold mb-3 text-green-700">Insights</h3>
 
           {Object.keys(correlations).length === 0 ? (
-            <p className="text-gray-500">Not enough data for insights.</p>
+            <p className="text-gray-500">Not enough data for correlational insights.</p>
           ) : (
             <ul className="space-y-3">
               {Object.entries(correlations).map(([key, obj]) => {
                 const [a, b] = key.split("__");
-                const abs = Math.abs(obj.value);
 
-                // Determine strength text
-                const strength =
-                  abs >= 0.65 ? "Strong" : abs >= 0.4 ? "Moderate" : "Weak";
-
-                // Create human sentence
                 const sentence =
                   obj.value > 0
-                    ? `When your ${a} increases, your ${b} also tends to increase.`
-                    : `When your ${a} increases, your ${b} tends to decrease.`;
+                    ? `When your ${Label_dict[a]} increases, your ${Label_dict[b]} also tends to increase.`
+                    : `When your ${Label_dict[a]} increases, your ${Label_dict[b]} tends to decrease.`;
 
                 return (
                   <li key={key}>
-                    {/* Heading */}
                     <div className="flex flex-col md:flex-row justify-center text-gray-800">
                       <div className="flex items-center space-x-1">
-                        <strong className="text-green-800">{a}</strong>
+                        <strong className="text-green-800">{Label_dict[a]}</strong>
                         <span>↔</span>
-                        <strong className="text-green-600">{b}</strong>
+                        <strong className="text-green-600">{Label_dict[b]}</strong>
                       </div>
 
                       <div className="text-sm text-gray-500 mt-1 md:ml-3">
