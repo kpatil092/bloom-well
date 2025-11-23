@@ -29,12 +29,7 @@ def records_to_df(records):
 
     return df
 
-def strength(v):
-    if abs(v) >= 0.65:
-        return "strong"
-    if abs(v) >= 0.4:
-        return "moderate"
-    return "weak"
+
 
 def compute_correlations(df):
     correlations = {}
@@ -59,6 +54,12 @@ def compute_correlations(df):
 
     return correlations
 
+def strength(v):
+    if abs(v) >= 0.65:
+        return "strong"
+    if abs(v) >= 0.4:
+        return "moderate"
+    return "weak"
 
 def analyze_correlations(records):
     df = records_to_df(records)
