@@ -58,7 +58,6 @@ class NutritionScraper:
         proxy_search_url = f"https://api.scrape.do/?url={encoded_search_url}&token=fac310728e2a4fafabf5b4d614184cab8bcc93d9b32"
         
         try:
-            print(f"🔍 Searching for: {food_item}")
             search_response = requests.get(proxy_search_url, headers=headers, timeout=10)
             search_soup = BeautifulSoup(search_response.content, 'html.parser')
             

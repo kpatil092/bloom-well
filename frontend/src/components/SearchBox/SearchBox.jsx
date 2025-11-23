@@ -38,6 +38,7 @@ const SearchBox = ({ onAddToMeal }) => {
   const handleAddToMeal = (mealData) => {
     onAddToMeal(mealData);
     setResults(null);
+    setQuery(''); 
   };
 
   return (
